@@ -3,6 +3,7 @@
     const wrap = document.getElementById('wrap');
     const STORAGE_KEY = 'counterValue';
     const MAX = 8;
+    let wakeLock = null;
 
     let current = parseInt(localStorage.getItem(STORAGE_KEY), 10);
     if (isNaN(current) || current < 1 || current > MAX) {
@@ -55,5 +56,28 @@
         }
     });
 
+    // Wake Lock API
+    async function requestWakeLock(){
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', ()=>{
+                    console.log('Wake Lock was released');
+                });
+                console.log('Wake Lock is active');
+            }
+        } catch(err) {
+            console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+        }
+    }
+
+    // re-request on visibility change
+    document.addEventListener('visibilitychange', ()=>{
+        if (wakeLock !== null && document.visibilityState === 'visible') {
+            requestWakeLock();
+        }
+    });
+
     show(current);
+    requestWakeLock();
 })();
